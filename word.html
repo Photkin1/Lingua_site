@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Слово - Детальный анализ | «Юности честное зерцало»</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            text-decoration: none;
+            color: #1e3c5c;
+            font-weight: 500;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .back-button:hover { transform: translateX(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+        .word-card {
+            background: white;
+            border-radius: 25px;
+            padding: 35px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        .word-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+            border-bottom: 3px solid #c9a03d;
+            padding-bottom: 15px;
+        }
+        .word-title { font-size: 48px; font-weight: bold; color: #1e3c5c; }
+        .speak-btn {
+            background: linear-gradient(135deg, #1e3c5c, #2a4a6e);
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 12px 18px;
+            border-radius: 50px;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .speak-btn:hover { transform: scale(1.05); }
+        .speak-btn.speaking {
+            background: linear-gradient(135deg, #c9a03d, #b8860b);
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .word-image { text-align: center; margin: 20px 0; }
+        .word-image img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            background: #f5f7fa;
+        }
+        .word-definition {
+            font-size: 18px;
+            color: #444;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            background: #f5f7fa;
+            padding: 15px;
+            border-radius: 15px;
+            border-left: 4px solid #c9a03d;
+        }
+        .word-example {
+            font-size: 14px;
+            color: #888;
+            font-style: italic;
+            margin-bottom: 30px;
+            padding: 12px;
+            background: #fafafa;
+            border-radius: 12px;
+            border-left: 4px solid #c9a03d;
+        }
+        .controls-panel {
+            background: #f5f7fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        .controls-panel h3 { margin-bottom: 15px; color: #1e3c5c; font-size: 16px; }
+        .smoothing-control {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .smoothing-control label { font-weight: bold; color: #555; }
+        input[type="range"] { width: 300px; }
+        .apply-smooth-btn {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #1e3c5c, #2a4a6e);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: transform 0.2s;
+        }
+        .apply-smooth-btn:hover { transform: translateY(-2px); }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        .stat-card .value { font-size: 24px; font-weight: bold; color: #c9a03d; }
+        .stat-card .raw-value { font-size: 11px; color: #999; margin-top: 5px; }
+        .stat-card .label { font-size: 12px; color: #666; margin-top: 8px; }
+        .centuries-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .century-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .century-card.highlight { border-color: #c9a03d; background: #fff8e7; }
+        .century-card .century-name { font-weight: bold; color: #555; margin-bottom: 10px; }
+        .century-card .century-value { font-size: 18px; font-weight: bold; color: #c9a03d; }
+        .century-card .century-raw { font-size: 10px; color: #aaa; margin-top: 4px; }
+        .chart-container { margin-top: 25px; padding: 20px; background: #fafafa; border-radius: 15px; }
+        .chart-container h3 { margin-bottom: 20px; color: #1e3c5c; font-size: 16px; }
+        canvas { max-height: 400px; width: 100%; }
+        .no-data-message {
+            text-align: center;
+            padding: 40px;
+            background: #ffe0e0;
+            border-radius: 15px;
+            color: #d32f2f;
+            font-size: 16px;
+        }
+        .info-note {
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+        @media (max-width: 768px) {
+            .word-title { font-size: 32px; }
+            .centuries-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .word-header { flex-direction: column; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-button">← Назад к списку слов</a>
+        <div class="word-card" id="wordCard"><div id="content">Загрузка...</div></div>
+    </div>
+
+    <script src="data.js"></script>
+    <script>
+const dictionary = {
+    "Блюдоли́з": { def: "Подхалим, льстец, который угождает влиятельным людям ради выгоды.", example: "«Наш новый менеджер — настоящий блюдолиз»", img: "1" },
+    "Возгре́й": { def: "Носовая слизь, сопли (грубое, просторечное слово).", example: "«Не люблю мелодрамы: там весь фильм разводят возгрей»", img: "3" },
+    "Вре́тище": { def: "Очень грубая, мешковатая одежда; символ бедности или неряшливости.", example: "«В этом вретище даже на рынок идти стыдно»", img: "2" },
+    "Домодержа́вство": { def: "Тотальная экономность в ведении дома, граничащая со скупостью.", example: "«Из-за его домодержавства мы год не покупаем фрукты»", img: "4" },
+    "Зерца́ло": { def: "Образец, наставление, то, на что следует равняться.", example: "«Эта книга стала зерцалом для молодых специалистов»", img: "5" },
+    "Колобро́дить": { def: "Беспорядочно двигаться, суетиться, вертеться на месте.", example: "«Хватит колобродить у меня за спиной!»", img: "6" },
+    "Ле́по": { def: "Красиво, хорошо, благопристойно.", example: "«Ты прибрался в комнате — стало так лепо!»", img: "7" },
+    "Мзда́": { def: "Плата, вознаграждение (часто с оттенком взятки или нечестного дохода).", example: "«Он потребовал свою мзду — десять тысяч сверху»", img: "8" },
+    "Наипа́че": { def: "Особенно, более всего, в особенности.", example: "«Я люблю классическую музыку, наипаче — Баха»", img: "9" },
+    "Неи́стовство": { def: "Крайняя степень буйства, агрессии или эмоционального возбуждения.", example: "«Фанаты устроили неистовство после гола»", img: "10" },
+    "Обхожде́ние": { def: "Манера поведения в обществе, вежливость, этикет.", example: "«Для работы в ресторане нужно иметь приятное обхождение»", img: "11" },
+    "Остро́ги": { def: "Сапоги или туфли с очень острыми, вытянутыми носами.", example: "«Она надела остроги, ими можно дырявить линолеум»", img: "12" },
+    "О́трок": { def: "Подросток, юноша (от 12 до 17 лет).", example: "«Этот отрок вместо уроков в телефоне сидит»", img: "13" },
+    "Перегово́рщик": { def: "Заговорщик, интриган, который ведёт тайные переговоры против кого-либо.", example: "«В отделе появился переговорщик»", img: "14" },
+    "Побрате́нец": { def: "Названый брат, лучший друг («братан»).", example: "«Мы с ним ещё в армии побратенцы»", img: "15" },
+    "Позыва́ться": { def: "Напрашиваться на роль или задание, выпячивать себя.", example: "«Он сам позывается быть главным»", img: "16" },
+    "Порека́ть": { def: "Укорять, осуждать, попрекать кого-то.", example: "«Хватит порекать меня опозданием!»", img: "17" },
+    "По́тчевать": { def: "Настойчиво угощать, заставлять есть или пить.", example: "«Бабушка потчевала меня пирожками»", img: "18" },
+    "Премене́ние": { def: "Изменение правил, отступление от нормы или закона.", example: "«Пришлось сделать пременение в графике»", img: "19" },
+    "Про́тори": { def: "Непредвиденные расходы, издержки, убытки.", example: "«Покупка колёс — лишние протори»", img: "20" },
+    "Проторжли́вость": { def: "Чрезмерная расточительность, привычка тратить на ненужные вещи.", example: "«Её проторжливость пугает: купила пятые часы»", img: "21" },
+    "Сга́дить": { def: "Испортить, насорить, сделать грязно (грубое слово).", example: "«Кто сгадил на кухне?»", img: "22" },
+    "Сопну́ть": { def: "Чавкать, хлюпать носом или причмокивать во время еды.", example: "«Не сопи за столом!»", img: "23" },
+    "То́ржище": { def: "Шумный рынок, базар, место стихийной торговли.", example: "«На торжище такая толпа!»", img: "24" },
+    "Ушно́е": { def: "Жидкое горячее блюдо, суп (уха в широком смысле, часто шутливо).", example: "«На обед ушное из курицы»", img: "25" },
+    "Челяди́нец": { def: "Слуга, прислуга, домашний работник.", example: "«Он обращается с курьером как с челядинцем»", img: "26" },
+    "Червото́чина": { def: "Скрытый изъян, порча, гнильца внутри чего-то внешне целого.", example: "«В проекте есть червоточина»", img: "27" },
+    "Чужело́жство": { def: "Супружеская измена.", example: "«Пресса пишет о чужеложстве звезды»", img: "28" },
+    "Шляхе́тство": { def: "Благородное происхождение, аристократизм (часто иронично).", example: "«Своим шляхетством не хвастайся»", img: "29" },
+    "Экзерци́ция": { def: "Нудное монотонное упражнение, тренировка или зубрёжка.", example: "«Каждое утро экзерциции на гитаре»", img: "30" }
+};
+
+    const WORDS_WITHOUT_DATA = ["побратенец", "проторжливость"];
+    let ngramData = {};
+    let currentWord = "";
+    let currentSmoothing = 3;
+    let chart = null;
+    let currentUtterance = null;
+
+    function formatFrequency(rawFreq) {
+        if (!rawFreq || rawFreq === 0) return "0";
+        const val = rawFreq * 1000000;
+        if (val < 0.001) { let str = val.toFixed(8); str = str.replace(/\.?0+$/, ''); return `${str} раз на млн слов`; }
+        if (val < 0.01) { let str = val.toFixed(6); str = str.replace(/\.?0+$/, ''); return `${str} раз на млн слов`; }
+        if (val < 0.1) { let str = val.toFixed(5); str = str.replace(/\.?0+$/, ''); return `${str} раз на млн слов`; }
+        if (val < 1) { let str = val.toFixed(4); str = str.replace(/\.?0+$/, ''); return `${str} раз на млн слов`; }
+        if (val < 100) { let str = val.toFixed(2); str = str.replace(/\.?0+$/, ''); return `${str} раз на млн слов`; }
+        return `${Math.round(val)} раз на млн слов`;
+    }
+
+    function formatRawFreq(rawFreq) {
+        if (!rawFreq || rawFreq === 0) return "0";
+        return rawFreq.toExponential(4);
+    }
+
+    function speakWord() {
+        const info = dictionary[currentWord];
+        if (!info) return;
+        
+        // Останавливаем текущее произнесение, если оно есть
+        if (currentUtterance) {
+            window.speechSynthesis.cancel();
+            currentUtterance = null;
+        }
+        
+        const text = `${currentWord}. ${info.def} ${info.example}`;
+        currentUtterance = new SpeechSynthesisUtterance(text);
+        currentUtterance.lang = 'ru-RU';
+        currentUtterance.rate = 0.9;
+        
+        const btn = document.getElementById('speakBtn');
+        if (btn) { 
+            btn.classList.add('speaking'); 
+            btn.textContent = '🔊 Озвучивание...'; 
+        }
+        
+        currentUtterance.onend = () => { 
+            if (btn) { 
+                btn.classList.remove('speaking'); 
+                btn.textContent = '🔊 Озвучить слово'; 
+            }
+            currentUtterance = null;
+        };
+        
+        currentUtterance.onerror = () => { 
+            if (btn) { 
+                btn.classList.remove('speaking'); 
+                btn.textContent = '🔊 Озвучить слово'; 
+            }
+            currentUtterance = null;
+            alert('Ошибка синтеза речи'); 
+        };
+        
+        window.speechSynthesis.speak(currentUtterance);
+    }
+
+    function smoothData(data, windowSize) {
+        if (windowSize <= 1 || !data) return data;
+        const result = [];
+        const half = Math.floor(windowSize / 2);
+        for (let i = 0; i < data.length; i++) {
+            let sum = 0, count = 0;
+            for (let j = -half; j <= half; j++) {
+                const idx = i + j;
+                if (idx >= 0 && idx < data.length) { sum += data[idx]; count++; }
+            }
+            result.push(sum / count);
+        }
+        return result;
+    }
+
+    function getWordStats(word, freqs, years) {
+        if (WORDS_WITHOUT_DATA.includes(word)) return { hasData: false };
+        if (!freqs || freqs.length === 0 || freqs.every(f => f === 0)) return { hasData: false };
+        let maxFreq = 0, peakYear = null;
+        for (let i = 0; i < freqs.length; i++) { if (freqs[i] > maxFreq) { maxFreq = freqs[i]; peakYear = years[i]; } }
+        const avgFreq = freqs.reduce((a,b) => a + b, 0) / freqs.length;
+        let modernSum = 0, modernCount = 0;
+        for (let i = 0; i < years.length; i++) { if (years[i] >= 2000) { modernSum += freqs[i]; modernCount++; } }
+        const modernFreq = modernCount ? modernSum / modernCount : 0;
+        const centuries = { "XIX век (1800-1899)": { sum: 0, count: 0 }, "XX век (1900-1999)": { sum: 0, count: 0 }, "XXI век (2000-2019)": { sum: 0, count: 0 } };
+        for (let i = 0; i < years.length; i++) {
+            const y = years[i];
+            if (y >= 1800 && y <= 1899) { centuries["XIX век (1800-1899)"].sum += freqs[i]; centuries["XIX век (1800-1899)"].count++; }
+            else if (y >= 1900 && y <= 1999) { centuries["XX век (1900-1999)"].sum += freqs[i]; centuries["XX век (1900-1999)"].count++; }
+            else if (y >= 2000) { centuries["XXI век (2000-2019)"].sum += freqs[i]; centuries["XXI век (2000-2019)"].count++; }
+        }
+        const centuryStats = {};
+        for (const [century, d] of Object.entries(centuries)) centuryStats[century] = d.count ? d.sum / d.count : 0;
+        return { hasData: true, peakYear, peakFreq: maxFreq, avgFreq, modernFreq, centuryStats };
+    }
+
+    function convertData() {
+        for (const [word, yearsData] of Object.entries(NGRAM_DATA)) {
+            ngramData[word] = { years: [], frequencies: [] };
+            const sortedYears = Object.keys(yearsData).sort((a,b) => a - b);
+            for (const year of sortedYears) {
+                ngramData[word].years.push(parseInt(year));
+                ngramData[word].frequencies.push(yearsData[year]);
+            }
+        }
+    }
+
+    function renderWordPage() {
+        const params = new URLSearchParams(window.location.search);
+        currentWord = params.get('word');
+        currentSmoothing = parseInt(params.get('smoothing')) || 3;
+        const info = dictionary[currentWord];
+        const container = document.getElementById('content');
+        if (!info) { container.innerHTML = '<div class="no-data-message">❌ Слово не найдено</div>'; return; }
+        
+        const isNoDataWord = WORDS_WITHOUT_DATA.includes(currentWord);
+        const data = ngramData[currentWord];
+        const hasAnyData = !isNoDataWord && data && data.frequencies && data.frequencies.length > 0 && !data.frequencies.every(f => f === 0);
+        
+        if (!hasAnyData) {
+            container.innerHTML = `
+                <div class="word-header"><div class="word-title">${currentWord}</div><button class="speak-btn" id="speakBtn">🔊 Озвучить слово</button></div>
+                <div class="word-image"><img src="images/${info.img}.jpg" alt="${currentWord}" onerror="this.style.display='none'"></div>
+                <div class="word-definition">📖 ${info.def}</div>
+                <div class="word-example">📌 ${info.example}</div>
+                <div class="no-data-message">⚠️ СЛОВО ОТСУТСТВУЕТ В КОРПУСЕ GOOGLE BOOKS<br><small>Данных для слова «${currentWord}» нет в корпусе (1800-2019).</small></div>
+            `;
+            const btn = document.getElementById('speakBtn'); if (btn) btn.onclick = speakWord;
+            return;
+        }
+        
+        const smoothedFreqs = smoothData(data.frequencies, currentSmoothing);
+        const stats = getWordStats(currentWord, smoothedFreqs, data.years);
+        container.innerHTML = `
+            <div class="word-header"><div class="word-title">${currentWord}</div><button class="speak-btn" id="speakBtn">🔊 Озвучить слово</button></div>
+            <div class="word-image"><img src="images/${info.img}.jpg" alt="${currentWord}" onerror="this.style.display='none'"></div>
+            <div class="word-definition">📖 ${info.def}</div>
+            <div class="word-example">📌 ${info.example}</div>
+            <div class="controls-panel"><h3>⚙️ Сглаживание</h3><div class="smoothing-control"><label>Сглаживание:</label><input type="range" id="smoothingSlider" min="0" max="10" value="${currentSmoothing}" step="1"><span id="smoothingValue">${currentSmoothing}</span><button class="apply-smooth-btn" id="applySmoothing">Применить</button></div></div>
+            <div class="stats-grid">
+                <div class="stat-card"><div class="value">${stats.peakYear || '—'}</div><div class="label">Пиковый год</div></div>
+                <div class="stat-card"><div class="value">${formatFrequency(stats.peakFreq)}</div><div class="raw-value">(частота: ${formatRawFreq(stats.peakFreq)})</div><div class="label">Пиковая частота</div></div>
+                <div class="stat-card"><div class="value">${formatFrequency(stats.avgFreq)}</div><div class="raw-value">(частота: ${formatRawFreq(stats.avgFreq)})</div><div class="label">Средняя частота</div></div>
+                <div class="stat-card"><div class="value">${formatFrequency(stats.modernFreq)}</div><div class="raw-value">(частота: ${formatRawFreq(stats.modernFreq)})</div><div class="label">Современная частота (2000-2019)</div></div>
+            </div>
+            <div class="centuries-grid">
+                <div class="century-card ${stats.centuryStats['XIX век (1800-1899)'] > stats.centuryStats['XX век (1900-1999)'] && stats.centuryStats['XIX век (1800-1899)'] > stats.centuryStats['XXI век (2000-2019)'] ? 'highlight' : ''}"><div class="century-name">🏛️ XIX век</div><div class="century-value">${formatFrequency(stats.centuryStats['XIX век (1800-1899)'])}</div><div class="century-raw">(частота: ${formatRawFreq(stats.centuryStats['XIX век (1800-1899)'])})</div></div>
+                <div class="century-card ${stats.centuryStats['XX век (1900-1999)'] > stats.centuryStats['XIX век (1800-1899)'] && stats.centuryStats['XX век (1900-1999)'] > stats.centuryStats['XXI век (2000-2019)'] ? 'highlight' : ''}"><div class="century-name">📺 XX век</div><div class="century-value">${formatFrequency(stats.centuryStats['XX век (1900-1999)'])}</div><div class="century-raw">(частота: ${formatRawFreq(stats.centuryStats['XX век (1900-1999)'])})</div></div>
+                <div class="century-card ${stats.centuryStats['XXI век (2000-2019)'] > stats.centuryStats['XIX век (1800-1899)'] && stats.centuryStats['XXI век (2000-2019)'] > stats.centuryStats['XX век (1900-1999)'] ? 'highlight' : ''}"><div class="century-name">📱 XXI век</div><div class="century-value">${formatFrequency(stats.centuryStats['XXI век (2000-2019)'])}</div><div class="century-raw">(частота: ${formatRawFreq(stats.centuryStats['XXI век (2000-2019)'])})</div></div>
+            </div>
+            <div class="chart-container"><h3>📈 Динамика частотности (${data.years[0]}-${data.years[data.years.length-1]})</h3><canvas id="freqChart"></canvas></div>
+            <div class="info-note">📊 Частота = сколько раз слово встречается на 1 миллион слов в корпусе Google Books<br>В скобках указана сырая частотность (доля от 1)</div>
+        `;
+        const btn = document.getElementById('speakBtn'); if (btn) btn.onclick = speakWord;
+        createChart(data.years, smoothedFreqs);
+        const slider = document.getElementById('smoothingSlider');
+        const valSpan = document.getElementById('smoothingValue');
+        const applyBtn = document.getElementById('applySmoothing');
+        if (slider && applyBtn) {
+            slider.addEventListener('input', () => { valSpan.textContent = slider.value; });
+            applyBtn.addEventListener('click', () => { window.location.href = `word.html?word=${encodeURIComponent(currentWord)}&smoothing=${slider.value}`; });
+        }
+    }
+
+    function createChart(years, freqs) {
+        const canvas = document.getElementById('freqChart');
+        if (!canvas) return;
+        if (chart) chart.destroy();
+        const sampledYears = [], sampledFreqs = [];
+        for (let i = 0; i < years.length; i += 5) { sampledYears.push(years[i]); sampledFreqs.push(freqs[i]); }
+        chart = new Chart(canvas, {
+            type: 'line',
+            data: { labels: sampledYears, datasets: [{ label: `Упоминаний на млн слов: "${currentWord}"`, data: sampledFreqs, borderColor: '#c9a03d', backgroundColor: 'rgba(201, 160, 61, 0.1)', borderWidth: 2, fill: true, tension: 0.3, pointRadius: 0, pointHoverRadius: 5 }] },
+            options: {
+                responsive: true, maintainAspectRatio: true,
+                plugins: { tooltip: { callbacks: { label: (ctx) => { const val = ctx.raw; return `Упоминаний на млн: ${(val*1000000).toFixed(2)} (частота: ${val.toExponential(4)})`; } } } },
+                scales: { x: { title: { display: true, text: 'Год' }, ticks: { maxRotation: 45, autoSkip: true, maxTicksLimit: 10 } }, y: { title: { display: true, text: 'Упоминаний на 1 млн слов' }, ticks: { callback: (val) => (val * 1000000).toExponential(2) } } }
+            }
+        });
+    }
+
+    convertData();
+    renderWordPage();
+    </script>
+</body>
+</html>
